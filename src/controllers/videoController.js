@@ -6,6 +6,7 @@ import sequelize from "../models/connect.js";
 import { Sequelize } from "sequelize";
 
 import { responseData } from "../config/Response.js";
+import { decodeToken } from "../config/jwt.js";
 
 let model = initModels(sequelize);
 let Op = Sequelize.Op;
@@ -96,6 +97,7 @@ const createVideo = (req, res) => {
 
 const getVideoId = async (req, res) => {
   try {
+    // new Date()
     let { video_id } = req.params;
 
     let dataPk = await model.video.findByPk(video_id);
@@ -115,19 +117,47 @@ const getVideoId = async (req, res) => {
   }
 };
 
-const getCommentVideo = async (req, res) => {
+export const getCommentVideo = async (req, res) => {
   try {
     let { videoId } = req.params;
+
     let data = await model.video_comment.findAll({
       where: {
         video_id: videoId,
       },
       include: ["user"],
     });
+
     responseData(res, "Thành công", data, 200);
   } catch {
     responseData(res, "Lỗi ...", "", 500);
   }
 };
 
-export { getVideo, createVideo, getVideoId, getCommentVideo };
+export const commentVideo = async (req, res) => {
+  try {
+    let { token } = req.headers;
+    // giải mã => object giống bên trang jwt.io
+    let dToken = decodeToken(token);
+
+    let { user_id } = dToken.data;
+    let { video_id, content } = req.body;
+
+    let newData = {
+      user_id,
+      video_id,
+      content,
+      date_create: new Date(),
+      reply_list: "",
+      timestamp: new Date(),
+    };
+
+    await model.video_comment.create(newData);
+
+    responseData(res, "Thành công", "", 200);
+  } catch {
+    responseData(res, "Lỗi ...", "", 500);
+  }
+};
+
+export { getVideo, createVideo, getVideoId };

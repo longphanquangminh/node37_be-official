@@ -16,3 +16,7 @@ authRoute.post("/signup", signUp);
 authRoute.post("/login-facebook", loginFacebook);
 
 export default authRoute;
+
+// yarn add bcrypt
+// mã hóa pass word
+// so sánh dữ liệu thô và dữ liệu mã hóa, mã hóa 1 đầu?
