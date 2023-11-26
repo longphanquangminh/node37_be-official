@@ -6,7 +6,7 @@
 import jwt from "jsonwebtoken";
 
 export const createToken = data => {
-  let token = jwt.sign({ data }, "BIMAT", { algorithm: "HS256", expiresIn: "10m" });
+  let token = jwt.sign({ data }, "BIMAT", { algorithm: "HS256", expiresIn: "3s" });
   return token;
 };
 
@@ -33,6 +33,7 @@ export const verifyToken = (req, res, next) => {
     next();
   } else {
     // token không hợp lệ
-    res.status(401).send(check.message);
+    // res.status(401).send(check.message);
+    res.status(401).send(check.name);
   }
 };

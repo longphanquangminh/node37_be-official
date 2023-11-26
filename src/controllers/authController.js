@@ -3,7 +3,7 @@ import initModels from "../models/init-models.js";
 import sequelize from "../models/connect.js";
 
 import bcrypt from "bcrypt";
-import { createToken } from "../config/jwt.js";
+import { checkToken, createRefToken, createToken, decodeToken } from "../config/jwt.js";
 
 let model = initModels(sequelize);
 
@@ -22,26 +22,17 @@ export const login = async (req, res) => {
 
   // tồn tại => login thành công
   if (checkUser) {
+    // milisecond
+    let key = new Date().getTime();
     if (bcrypt.compareSync(pass_word, checkUser.pass_word)) {
-      let token = createToken({ user_id: checkUser.user_id });
+      let token = createToken({ user_id: checkUser.user_id, key });
       // khởi tạo refresh token
-      let refToken = createRefToken({ user_id: checkUser.user_id });
+      let refToken = createRefToken({ user_id: checkUser.user_id, key });
 
       // lưu refresh token vào table user
 
       // UPDATE users SET ... WHERE ...
-      await model.users.update(
-        {
-          full_name: checkUser.full_name,
-          email: checkUser.email,
-          avatar: checkUser.avatar,
-          pass_word: checkUser.pass_word,
-          face_app_id: checkUser.face_app_id,
-          role: checkUser.role,
-          refresh_token: refToken,
-        },
-        { where: { user_id: checkUser.user_id } },
-      );
+      await model.users.update({ ...checkUser.dataValues, refresh_token: refToken }, { where: { user_id: checkUser.user_id } });
 
       responseData(res, "Login thành công", token, 200);
     } else {
@@ -122,4 +113,75 @@ export const loginFacebook = async (req, res) => {
   } catch {
     responseData(res, "Lỗi ...", "", 500);
   }
+};
+
+export const tokenRef = async (req, res) => {
+  try {
+    let { token } = req.headers;
+
+    // check token
+    let check = checkToken(token);
+    if (check != null && check.name != "TokenExpiredError") {
+      // token không hợp lệ
+      res.status(401).send(check.name);
+      return;
+    }
+
+    // {data: {user_id: }}
+    let accessToken = decodeToken(token);
+
+    // lấy thông tin user trong database
+    let getUser = await model.users.findOne({
+      where: {
+        user_id: accessToken.data.user_id,
+      },
+    });
+
+    // check token
+    let checkRef = checkRefToken(token);
+    if (checkRef != null) {
+      // check refresh token của mình còn hạn hay không
+      res.status(401).send(checkRef.name);
+      return;
+    }
+
+    // check code
+    if (accessToken.data.key != refToken.data.key) {
+      res.status(401).send(check.name);
+      return;
+    }
+
+    // tạo mới access token
+    let newToken = createToken({ user_id: getUser.user_id, key: refToken.data.key });
+
+    responseData(res, "", newToken, 200);
+  } catch {
+    responseData(res, "Lỗi ...", "", 500);
+  }
+};
+
+export const logout = async (req, res) => {
+  let { token } = req.headers;
+
+  // check token
+  let check = checkToken(token);
+  if (check != null && check.name != "TokenExpiredError") {
+    // token không hợp lệ
+    res.status(401).send(check.name);
+    return;
+  }
+
+  // {data: {user_id: }}
+  let accessToken = decodeToken(token);
+
+  // lấy thông tin user trong database
+  let getUser = await model.users.findOne({
+    where: {
+      user_id: accessToken.data.user_id,
+    },
+  });
+
+  await model.users.update({ ...getUser.dataValues, refresh_token: "" }, { where: { user_id: checkUser.user_id } });
+
+  responseData(res, "​", "", 200);
 };

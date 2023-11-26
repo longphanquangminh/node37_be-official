@@ -2,7 +2,7 @@
 // authorization
 
 import express from "express";
-import { login, loginFacebook, signUp } from "../controllers/authController.js";
+import { login, loginFacebook, logout, signUp, tokenRef } from "../controllers/authController.js";
 
 const authRoute = express.Router();
 
@@ -14,6 +14,11 @@ authRoute.post("/signup", signUp);
 
 // login facebook
 authRoute.post("/login-facebook", loginFacebook);
+
+authRoute.post("/token-ref", tokenRef);
+
+// API logout
+authRoute.post("/logout", logout);
 
 export default authRoute;
 
