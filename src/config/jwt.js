@@ -3,37 +3,44 @@
 // 2. kiểm tra token hợp lệ
 // 3. giải token
 
-import jwt from "jsonwebtoken";
+import jwt from 'jsonwebtoken';
 
-export const createToken = data => {
-  let token = jwt.sign({ data }, "BIMAT", { algorithm: "HS256", expiresIn: "3s" });
-  return token;
-};
+export const createToken = (data) => {
+    let token = jwt.sign({ data }, "BIMAT", { algorithm: "HS256", expiresIn: "3s" });
 
-export const checkToken = token => jwt.verify(token, "BIMAT", (error, decoded) => error);
+    return token;
+}
 
-export const createRefToken = data => {
-  let token = jwt.sign({ data }, "BIMAT_2", { algorithm: "HS256", expiresIn: "7d" });
-  return token;
-};
+export const checkToken = (token) => jwt.verify(token, "BIMAT", (error, decoded) => error
+);
 
-export const checkRefToken = token => jwt.verify(token, "BIMAT_2", (error, decoded) => error);
 
-export const decodeToken = token => {
-  return jwt.decode(token);
-};
+export const createRefToken = (data) => {
+    let token = jwt.sign({ data }, "KO_BIMAT", { algorithm: "HS256", expiresIn: "7d" });
+
+    return token;
+}
+
+export const checkRefToken = (token) => jwt.verify(token, "KO_BIMAT", (error, decoded) => error
+);
+
+export const decodeToken = (token) => {
+    return jwt.decode(token);
+}
 
 export const verifyToken = (req, res, next) => {
-  let { token } = req.headers;
 
-  let check = checkToken(token);
+    let { token } = req.headers;
 
-  if (check == null) {
-    // check token hợp lệ
-    next();
-  } else {
-    // token không hợp lệ
-    // res.status(401).send(check.message);
-    res.status(401).send(check.name);
-  }
-};
+    let check = checkToken(token);
+
+    if (check == null) {
+        // check token hợp lệ
+        next()
+    } else {
+        // token không hợp lệ
+        res.status(401).send(check.name)
+    }
+
+
+}

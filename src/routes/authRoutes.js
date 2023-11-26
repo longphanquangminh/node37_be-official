@@ -1,15 +1,14 @@
 // authentication
-// authorization
+// authoriztion
 
-import express from "express";
-import { login, loginFacebook, logout, signUp, tokenRef } from "../controllers/authController.js";
+import express from 'express';
+import { login, loginFacebook, logout, signUp, tokenRef } from '../controllers/authController.js';
 
 const authRoute = express.Router();
 
-// login
+//login
 authRoute.post("/login", login);
-
-// signup
+//signup
 authRoute.post("/signup", signUp);
 
 // login facebook
@@ -23,5 +22,5 @@ authRoute.post("/logout", logout);
 export default authRoute;
 
 // yarn add bcrypt
-// mã hóa pass word
-// so sánh dữ liệu thô và dữ liệu mã hóa, mã hóa 1 đầu?
+// mã hóa pass word 
+// so sánh dữ thô và dữ liệu mã hóa

@@ -15,27 +15,21 @@ export default function initModels(sequelize) {
 
 
   video.belongsTo(users, {  foreignKey: "user_id"});
-
-
   video.hasMany(video_comment, { as: "video_comments", foreignKey: "video_id"});
   video.hasMany(video_like, { as: "video_likes", foreignKey: "video_id"});
   video.belongsTo(video_type, { as: "type", foreignKey: "type_id"});
 
 
 
+  video_comment.belongsTo(users, { as: "user", foreignKey: "user_id"});
+  video_comment.belongsTo(video, { as: "video", foreignKey: "video_id"});
 
 
   users.hasMany(video, { as: "videos", foreignKey: "user_id"});
-
-  video_comment.belongsTo(users, { as: "user", foreignKey: "user_id"});
   users.hasMany(video_comment, { as: "video_comments", foreignKey: "user_id"});
   video_like.belongsTo(users, { as: "user", foreignKey: "user_id"});
   users.hasMany(video_like, { as: "video_likes", foreignKey: "user_id"});
-
-  video_comment.belongsTo(video, { as: "video", foreignKey: "video_id"});
-  
   video_like.belongsTo(video, { as: "video", foreignKey: "video_id"});
-
   video_type.hasMany(video, { as: "videos", foreignKey: "type_id"});
 
 

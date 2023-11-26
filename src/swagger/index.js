@@ -1,12 +1,13 @@
+
 /**
  * @swagger
  * /video/get-video:
- *  get:
+ *    get:
  *      description: responses
- *      tags: [Video]
+ *      tags: [User]
  *      responses:
- *          200:
- *              description: success
+ *          200: 
+ *              description: success   
  */
 
 /**
@@ -30,6 +31,6 @@
  *             lastName:
  *               type: string
  *      responses:
- *          200:
- *              description: res
+ *          200: 
+ *              description: res   
  */
