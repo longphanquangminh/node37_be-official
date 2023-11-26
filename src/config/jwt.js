@@ -7,11 +7,17 @@ import jwt from "jsonwebtoken";
 
 export const createToken = data => {
   let token = jwt.sign({ data }, "BIMAT", { algorithm: "HS256", expiresIn: "10m" });
-
   return token;
 };
 
 export const checkToken = token => jwt.verify(token, "BIMAT", (error, decoded) => error);
+
+export const createRefToken = data => {
+  let token = jwt.sign({ data }, "BIMAT_2", { algorithm: "HS256", expiresIn: "7d" });
+  return token;
+};
+
+export const checkRefToken = token => jwt.verify(token, "BIMAT_2", (error, decoded) => error);
 
 export const decodeToken = token => {
   return jwt.decode(token);

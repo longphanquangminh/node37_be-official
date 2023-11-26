@@ -24,6 +24,24 @@ export const login = async (req, res) => {
   if (checkUser) {
     if (bcrypt.compareSync(pass_word, checkUser.pass_word)) {
       let token = createToken({ user_id: checkUser.user_id });
+      // khởi tạo refresh token
+      let refToken = createRefToken({ user_id: checkUser.user_id });
+
+      // lưu refresh token vào table user
+
+      // UPDATE users SET ... WHERE ...
+      await model.users.update(
+        {
+          full_name: checkUser.full_name,
+          email: checkUser.email,
+          avatar: checkUser.avatar,
+          pass_word: checkUser.pass_word,
+          face_app_id: checkUser.face_app_id,
+          role: checkUser.role,
+          refresh_token: refToken,
+        },
+        { where: { user_id: checkUser.user_id } },
+      );
 
       responseData(res, "Login thành công", token, 200);
     } else {
