@@ -1,5 +1,5 @@
-import express from 'express';
-import { getInfo, getUser, updateInfo } from '../controllers/userController.js';
+import express from "express";
+import { getInfo, getUser, updateInfo, uploadAvatar } from "../controllers/userController.js";
 
 const userRoute = express.Router();
 
@@ -9,10 +9,19 @@ const userRoute = express.Router();
 userRoute.get("/get-user", getUser);
 
 // API get info user
-userRoute.get("/get-info", getInfo)
+userRoute.get("/get-info", getInfo);
 
 // API update info user
-userRoute.put("/update-info", updateInfo)
+userRoute.put("/update-info", updateInfo);
+
+// API upload avatar
+// yarn add multer
+
+// process.cwd() // trả về đường dẫn gốc của source
+
+import upload from "../config/upload.js";
+
+userRoute.post("/upload-avatar", upload.single("avatar"), uploadAvatar);
 
 export default userRoute;
 
