@@ -17,12 +17,21 @@ import { buildSchema } from "graphql";
 // [Int]: [1, 2, 3]
 let schemaGraphql = buildSchema(`
 
-    type User{
-        id: ID
-        userName: String
-        age: Int
+    type User {
+        user_id: ID
+        full_name: String
         email: String
-        product: [Product]
+        avatar: String
+        pass_word: String
+        face_app_id: String
+        role: String
+        refresh_token: String
+    }
+
+    type VideoType {
+        type_id: ID
+        type_name: String
+        icon: String
     }
 
     type Product {
@@ -31,8 +40,16 @@ let schemaGraphql = buildSchema(`
     }
 
     type Video {
-        video_id: ID
-        video_name: String
+        video_id:      Int
+        video_name:    String
+        thumbnail:     String
+        description:   String
+        views:         Int
+        source:        String
+        user_id:       Int
+        type_id:       Int
+        users: User
+        video_type: VideoType
     }
 
     type RootQuery {
@@ -58,7 +75,12 @@ const prisma = new PrismaClient();
 
 let resolver = {
   getVideo: async () => {
-    let data = await prisma.video.findMany();
+    let data = await prisma.video.findMany({
+      include: {
+        users: true,
+        video_type: true,
+      },
+    });
 
     return data;
   },
