@@ -1,184 +1,205 @@
 // quản lý, thực hiện chức năng
 
 // import Video from "../models/video.js";
-import initModels from '../models/init-models.js';
-import sequelize from '../models/connect.js';
-import { Sequelize } from 'sequelize';
+import initModels from "../models/init-models.js";
+import sequelize from "../models/connect.js";
+import { Sequelize } from "sequelize";
 
-import { responseData } from '../config/Response.js';
-import { decodeToken } from '../config/jwt.js';
+import { responseData } from "../config/Response.js";
+import { decodeToken } from "../config/jwt.js";
 
 let model = initModels(sequelize);
 let Op = Sequelize.Op;
 
+// prisma
+import { PrismaClient } from "@prisma/client";
+let prisma = new PrismaClient();
+
+export const searchVideo = async (req, res) => {
+  let { videoName } = req.params;
+  // SELECT * FROM users
+  //   let data = await prisma.video.findAll(); // sequelize
+  // findAll : sequelize, findMany: Prisma
+  // findOne // sequelize
+  // findUnique, findFirst // prisma
+  // [ {user_id: 1}, {user_id: 1} ]
+  // [ {}, {} ]
+
+  // SELECT * FRO video WHERE video_name LIKE '%videoName%'
+  //   let data = await prisma.video.findMany({
+  //     where: {
+  //       video_name: {
+  //         contains: videoName,
+  //       },
+  //     },
+  //   }); // prisma
+
+  // Lưu ý:
+  // prisma.video.create({data: {video_id, video_name, ...}}) <=> mode.video.create({video_id, video_name, ...})
+  // prisma.video.update({data: {video_id, video_name, ...}, where: {}})
+  // prisma.video.delete({where}) <=> model.video.destroy({where})
+
+  let data = await prisma.video.findMany({
+    include: {
+      video_type: true,
+      video_comment: {
+        include: {
+          users: true,
+        },
+      },
+    },
+  });
+
+  responseData(res, "Thành công", data, 200);
+};
+
 export const getVideoPage = async (req, res) => {
-    try {
+  try {
+    let { page } = req.params;
+    let pageSize = 3;
 
-        let { page } = req.params;
-        let pageSize = 3;
+    let index = (page - 1) * pageSize;
 
-        let index = (page - 1) * pageSize;
+    let dataCount = await model.video.count();
+    let totalPage = Math.ceil(dataCount / pageSize);
 
-        let dataCount = await model.video.count();
-        let totalPage = Math.ceil(dataCount / pageSize);
+    // SELECT * FROM video LIMIT index , pageSize
+    let data = await model.video.findAll({
+      offset: index,
+      limit: pageSize,
+    });
 
-        // SELECT * FROM video LIMIT index , pageSize
-        let data = await model.video.findAll({
-            offset: index,
-            limit: pageSize
-
-        });
-
-        responseData(res, "Thành công", { data, totalPage }, 200);
-
-    } catch {
-        responseData(res, "Lỗi ...", "", 500);
-    }
-}
+    responseData(res, "Thành công", { data, totalPage }, 200);
+  } catch {
+    responseData(res, "Lỗi ...", "", 500);
+  }
+};
 
 export const getVideoByType = async (req, res) => {
-    try {
-        let { typeId } = req.params;
+  try {
+    let { typeId } = req.params;
 
-        let data = await model.video.findAll({
-            where: {
-                type_id: typeId
-            }
-        })
+    let data = await model.video.findAll({
+      where: {
+        type_id: typeId,
+      },
+    });
 
-        responseData(res, "Thành công", data, 200);
-
-    } catch {
-        responseData(res, "Lỗi ...", "", 500);
-    }
-}
+    responseData(res, "Thành công", data, 200);
+  } catch {
+    responseData(res, "Lỗi ...", "", 500);
+  }
+};
 
 export const getVideoType = async (req, res) => {
-    try {
+  try {
+    let data = await model.video_type.findAll();
 
-        let data = await model.video_type.findAll();
-
-        // res.status(200).send(data);
-        responseData(res, "Thành công", data, 200);
-    } catch {
-        // res.status(500).send("Lỗi ...")
-        responseData(res, "Lỗi ...", "", 500);
-
-    }
-}
+    // res.status(200).send(data);
+    responseData(res, "Thành công", data, 200);
+  } catch {
+    // res.status(500).send("Lỗi ...")
+    responseData(res, "Lỗi ...", "", 500);
+  }
+};
 
 const getVideo = async (req, res) => {
-    try {
-        // bất đồng bộ
+  try {
+    // bất đồng bộ
 
-        // SELECT video_id, video_name FROM video WHERE video_name LIKE '%code%'
-        // let data = await model.video.findAll({
+    // SELECT video_id, video_name FROM video WHERE video_name LIKE '%code%'
+    // let data = await model.video.findAll({
 
-        //     where: {
-        //         video_name: {
-        //             [Op.like]: '%gaming%'
-        //         }
-        //     },
+    //     where: {
+    //         video_name: {
+    //             [Op.like]: '%gaming%'
+    //         }
+    //     },
 
-        //     attributes:["video_id","video_name"]
-        // });
+    //     attributes:["video_id","video_name"]
+    // });
 
-        let data = await model.video.findAll({
-            include: [model.users, "type"]
-        });
+    let data = await model.video.findAll({
+      include: [model.users, "type"],
+    });
 
-        // res.status(200).send(data);
-        responseData(res, "Thành công", data, 200);
+    // res.status(200).send(data);
+    responseData(res, "Thành công", data, 200);
 
-        // ORM: sequelize, prisma
-    } catch (exception) {
-        // res.status(500).send("Lỗi ...")
-        responseData(res, "Lỗi ...", "", 500);
-
-    }
-
-}
+    // ORM: sequelize, prisma
+  } catch (exception) {
+    // res.status(500).send("Lỗi ...")
+    responseData(res, "Lỗi ...", "", 500);
+  }
+};
 
 const createVideo = (req, res) => {
-    res.send("create video");
-}
+  res.send("create video");
+};
 
 const getVideoId = async (req, res) => {
-    try {
-        // new Date()
-        let { video_id } = req.params;
+  try {
+    // new Date()
+    let { video_id } = req.params;
 
-        let dataPk = await model.video.findByPk(video_id);
+    let dataPk = await model.video.findByPk(video_id);
 
-        //  object => {}
-        // JOIN
-        let data = await model.video.findOne({
-            where: {
-                video_id
-            },
-            include: [model.users, "type"]
-        })
+    //  object => {}
+    // JOIN
+    let data = await model.video.findOne({
+      where: {
+        video_id,
+      },
+      include: [model.users, "type"],
+    });
 
-        responseData(res, "Thành công", data, 200);
-
-    }
-    catch {
-        responseData(res, "Lỗi ...", "", 500);
-
-    }
-}
+    responseData(res, "Thành công", data, 200);
+  } catch {
+    responseData(res, "Lỗi ...", "", 500);
+  }
+};
 
 export const getCommentVideo = async (req, res) => {
-    try {
-        let { videoId } = req.params;
+  try {
+    let { videoId } = req.params;
 
-        let data = await model.video_comment.findAll({
-            where: {
-                video_id: videoId
-            },
-            include: ["user"]
-        });
+    let data = await model.video_comment.findAll({
+      where: {
+        video_id: videoId,
+      },
+      include: ["user"],
+    });
 
-        responseData(res, "Thành công", data, 200);
-
-    } catch {
-        responseData(res, "Lỗi ...", "", 500);
-
-    }
-}
+    responseData(res, "Thành công", data, 200);
+  } catch {
+    responseData(res, "Lỗi ...", "", 500);
+  }
+};
 
 export const commentVideo = async (req, res) => {
-    try {
-        let { token } = req.headers;
-        // giải mã => object giống bên trang jwt.io
-        let dToken = decodeToken(token);
+  try {
+    let { token } = req.headers;
+    // giải mã => object giống bên trang jwt.io
+    let dToken = decodeToken(token);
 
-        let { user_id } = dToken.data;
-        let { video_id, content } = req.body;
+    let { user_id } = dToken.data;
+    let { video_id, content } = req.body;
 
-        let newData = {
-            user_id,
-            video_id,
-            content,
-            date_create: new Date(),
-            reply_list: "",
-            timestamp: new Date()
-        }
+    let newData = {
+      user_id,
+      video_id,
+      content,
+      date_create: new Date(),
+      reply_list: "",
+      timestamp: new Date(),
+    };
 
-        await model.video_comment.create(newData);
+    await model.video_comment.create(newData);
 
-        responseData(res, "Thành công", "", 200);
+    responseData(res, "Thành công", "", 200);
+  } catch {
+    responseData(res, "Lỗi ...", "", 500);
+  }
+};
 
-    } catch {
-        responseData(res, "Lỗi ...", "", 500);
-
-    }
-}
-
-export {
-    getVideo,
-    createVideo,
-    getVideoId
-}
-
-
+export { getVideo, createVideo, getVideoId };
