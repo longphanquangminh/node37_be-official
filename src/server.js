@@ -2,6 +2,9 @@ import express from "express";
 import cors from "cors";
 import rootRoute from "./routes/rootRoutes.js";
 
+import { createServer } from "http";
+import { Server } from "socket.io";
+
 const app = express();
 app.use(express.json());
 app.use(cors());
@@ -9,115 +12,31 @@ app.use(cors());
 // middle ware định vị thư mục load tài nguyên
 app.use(express.static("."));
 
+const httpServer = createServer(app);
+
+// đối tượng socket server
+export const io = new Server(httpServer, {
+  cors: {
+    origin: "*",
+  },
+});
+
+let number = 0;
+io.emit("fe-number", number + 1);
+
+io.on("connection", socket => {
+  // đối tượng socket client
+  // console.log(socket.id);
+
+  // server gửi đi tất cả client
+  io.emit("fe-connect", socket.id);
+  socket.on("number-be", () => {
+    io.emit("fe-number", number++);
+  });
+});
+
 // graphql
 import { graphqlHTTP } from "express-graphql";
-
-import { buildSchema } from "graphql";
-// [String]: [{productId, productName}, {productId, productName}]
-// [Int]: [1, 2, 3]
-let schemaGraphql = buildSchema(`
-
-    type User {
-        user_id: ID
-        full_name: String
-        email: String
-        avatar: String
-        pass_word: String
-        face_app_id: String
-        role: String
-        refresh_token: String
-    }
-
-    type VideoType {
-        type_id: ID
-        type_name: String
-        icon: String
-    }
-
-    type Product {
-        productId: ID
-        productName: String
-    }
-
-    type Video {
-        video_id:      Int
-        video_name:    String
-        thumbnail:     String
-        description:   String
-        views:         Int
-        source:        String
-        user_id:       Int
-        type_id:       Int
-        users: User
-        video_type: VideoType
-    }
-
-    type RootQuery {
-        getUser: User
-        getUserId(userId: Int, email: String, hoTen: String): User
-        getVideo: [Video]
-    }
-
-    type RootMutation {
-        createUser: String
-    }
-
-    schema {
-        query: RootQuery
-        mutation: RootMutation
-    }
-
-
-`);
-
-import { PrismaClient } from "@prisma/client";
-const prisma = new PrismaClient();
-
-let resolver = {
-  getVideo: async () => {
-    let data = await prisma.video.findMany({
-      include: {
-        users: true,
-        video_type: true,
-      },
-    });
-
-    return data;
-  },
-  getUser: () => {
-    const data = {
-      id: 1,
-      userName: "long",
-      age: 22,
-      email: "long@long",
-      product: [
-        {
-          productId: 1,
-          productName: "sp1",
-        },
-      ],
-    };
-    return data;
-  },
-  getUserId: ({ userId }) => {
-    const data = {
-      id: userId,
-      userName: "long",
-      age: 22,
-      email: "long@long",
-      product: [
-        {
-          productId: 1,
-          productName: "sp1",
-        },
-      ],
-    };
-    return data;
-  },
-  createUser: () => {
-    // return "Hello world !";
-  },
-};
 
 // localhost:8080/api
 app.use(
@@ -131,7 +50,8 @@ app.use(
 
 // end graphql
 
-app.listen(8080);
+// app.listen(8080);
+httpServer.listen(8080);
 // localhost:8080/video/get-video
 app.use(rootRoute);
 
@@ -141,6 +61,8 @@ app.use(rootRoute);
 // yarn add  swagger-ui-express swagger-jsdoc
 import swaggerUi from "swagger-ui-express";
 import swaggerJsDoc from "swagger-jsdoc";
+import { schemaGraphql } from "./graphql/schema.js";
+import { resolver } from "./graphql/resolver.js";
 
 const options = {
   definition: {
